@@ -1,9 +1,11 @@
 import { useState } from "react";
+import { useSignup } from "../hooks/useSignup";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 
 const SignupPage = () => {
-    const navigate = useNavigate();
+  const navigate = useNavigate();
+  const{signup}= useSignup();
 
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
@@ -12,29 +14,6 @@ const SignupPage = () => {
     const [gender, setGender] = useState("Male");
     const [dob, setDob] = useState("");
     const [membership, setMembership] = useState("Free");
-
-
-const signup = async (newUser) => {
-    try {
-      const res = await fetch("http://localhost:8000/signup", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(newUser),
-      });
-
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error("Signup failed");
-      }  
-    } catch (error) {
-      console.error(error);
-      toast.error("Signup failed.Please try again.");
-      return false;
-    }
-    return true;
-  };
 
   const submitForm = async (e) => {
     e.preventDefault();
@@ -45,14 +24,14 @@ const signup = async (newUser) => {
         password,
         phone,
         gender,
-        dateOfBirth: dob,
-        membershipStatus: membership,
+        date_of_birth: dob,
+        membership_status: membership,
     };
 
     const success = await signup(newUser);
     if (success){
         toast.success("Signup successful!");
-        return  navigate("/");
+        navigate("/");
     }
   };
 
