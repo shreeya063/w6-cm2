@@ -1,4 +1,4 @@
-require('dotenv').config()
+require("dotenv").config();
 const express = require("express");
 
 const app = express();
@@ -6,15 +6,18 @@ const userRouter = require("./routes/userRouter");
 
 const morgan = require("morgan");
 // const userRouter = require("./routes/userRouter");
-const { unknownEndpoint, errorHandler } = require("./middleware/customMiddleware");
+const {
+  unknownEndpoint,
+  errorHandler,
+} = require("./middleware/customMiddleware");
 const connectDB = require("./config/db");
 const cors = require("cors");
-const requireAuth = require('./middleware/requireAuth')
+const requireAuth = require("./middleware/requireAuth");
 
-const jobRouter = require('./routes/jobRouter');
+const jobRouter = require("./routes/jobRouter");
 
 // Middlewares
-app.use(cors())
+app.use(cors());
 app.use(express.json());
 app.use(morgan("dev"));
 app.use(requireAuth);
@@ -27,8 +30,7 @@ connectDB();
 app.use("/users", userRouter);
 
 // app.use("/api/users", userRouter);
-app.use('/api/jobs', jobRouter);
-
+app.use("/api/jobs", jobRouter);
 
 app.use(unknownEndpoint);
 app.use(errorHandler);
