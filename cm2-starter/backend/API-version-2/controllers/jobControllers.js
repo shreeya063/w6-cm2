@@ -3,8 +3,8 @@ const Job = require('../models/jobModel');
 
 exports.getAllJobs = async (req, res)=> {
     try{
-        
-    const jobs = await Job.find({}).sort({createdAt: -1});
+    const user_id = req.user_id;
+    const jobs = await Job.find({user_id}).sort({createdAt: -1});
 
     res.status(200).json(jobs);
 
@@ -16,11 +16,9 @@ exports.getAllJobs = async (req, res)=> {
 
 exports.createJob = async (req,res) =>{
     try{
-
-        //user_id vs userId??
-
-        //const userId = req.user._id;
-        const newJob = await Job.create({ ...req.body});
+        const user_id = req.user._id;
+        
+        const newJob = await Job.create({ ...req.body, user_id});
         res.status(201).json(newJob);
 
     } catch(err){
@@ -35,10 +33,10 @@ exports.getJobById = async (req,res)=>{
         return res.status(400).json({message: "Invalid job ID"});
     }
     try{
-        //userid
+        const user_id = req.user._id;
         const job = await Job.findById(jobId)
-        //.where("user_id")
-        //.equals(user_id);
+        .where("user_id")
+        .equals(user_id);
 
         if(job){
             res.status(200).json(job);
@@ -60,9 +58,9 @@ exports.updateJob = async (req,res) => {
     }
 
     try{
-        //const userId = req.user._id;
+        const user_id = req.user._id;
         const updatedJob = await Job.findByIdAndUpdate(
-            {_id: jobId},
+            {_id: jobId, user_id: user_id},
             {...req.body},
             {new: true}
         );
@@ -86,8 +84,8 @@ exports.deleteJob = async (req,res) =>{
     }
 
     try{
-        //const userId = req.user._id;
-        const deletedJob = await Job.findByIdAndDelete({ _id: jobId});
+        const user_id = req.user._id;
+        const deletedJob = await Job.findByIdAndDelete({ _id: jobId, user_id: user_id});
         if (deletedJob) {
             res.status(200).json({message: "Job deleted successfully"});
         } else {

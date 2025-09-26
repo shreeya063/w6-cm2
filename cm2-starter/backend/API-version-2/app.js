@@ -9,6 +9,7 @@ const morgan = require("morgan");
 const { unknownEndpoint, errorHandler } = require("./middleware/customMiddleware");
 const connectDB = require("./config/db");
 const cors = require("cors");
+const requireAuth = require('./middleware/requireAuth')
 
 const jobRouter = require('./routes/jobRouter');
 
@@ -16,6 +17,7 @@ const jobRouter = require('./routes/jobRouter');
 app.use(cors())
 app.use(express.json());
 app.use(morgan("dev"));
+app.use(requireAuth);
 
 connectDB();
 
