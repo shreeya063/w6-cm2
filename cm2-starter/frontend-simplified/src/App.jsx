@@ -27,7 +27,7 @@ const App = () => {
         <Route path="/add-job" element={<AddJobPage />} />
         <Route path="/edit-job/:id" element={<EditJobPage />} />
         <Route path="/jobs/:id" element={<JobPage />} />
-        <Route path="/signup" element={<SignupPage />} />
+        <Route path="/signup" element={<SignupPage setIsAuthenticated={setIsAuthenticated} />} />
         <Route
           path="/login"
           element={<Login setIsAuthenticated={setIsAuthenticated} />}
