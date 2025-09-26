@@ -3,17 +3,17 @@ import { useSignup } from "../hooks/useSignup";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 
-const SignupPage = () => {
+const SignupPage = ({setIsAuthenticated}) => {
   const navigate = useNavigate();
   const{signup}= useSignup();
 
-    const [name, setName] = useState("");
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [phone, setPhone] = useState("");
-    const [gender, setGender] = useState("Male");
-    const [dob, setDob] = useState("");
-    const [membership, setMembership] = useState("Free");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [phone, setPhone] = useState("");
+  const [gender, setGender] = useState("Female");
+  const [dob, setDob] = useState("");
+  const [membership, setMembership] = useState("Free");
 
   const submitForm = async (e) => {
     e.preventDefault();
@@ -22,15 +22,17 @@ const SignupPage = () => {
         name,
         email,
         password,
-        phone,
+        phone_number: phone,
         gender,
         date_of_birth: dob,
         membership_status: membership,
     };
 
     const success = await signup(newUser);
+
     if (success){
         toast.success("Signup successful!");
+        setIsAuthenticated(true);
         navigate("/");
     }
   };
