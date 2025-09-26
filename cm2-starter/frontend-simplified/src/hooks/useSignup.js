@@ -5,7 +5,7 @@ export const useSignup = () => {
 
     const signup = async(newUser)=> {
         try {
-            const res = await fetch("http://localhost:4000/users/signup", {
+            const res = await fetch("/users/signup", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
