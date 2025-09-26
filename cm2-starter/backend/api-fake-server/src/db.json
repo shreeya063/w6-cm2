@@ -1,0 +1,25 @@
+{
+  "signup": [
+    {
+      "id": "ccc6",
+      "name": "Abcdefg Hijklmonp",
+      "email": "abcd@gmail.com",
+      "password": "asdfghjkl12345__",
+      "phone": "1234567890",
+      "gender": "Male",
+      "dateOfBirth": "2011-04-26",
+      "membershipStatus": "Free"
+    },
+    
+    {
+      "id": "b4ce",
+      "name": "test User",
+      "email": "test1@gmail.com",
+      "password": "ASDFGHJKL123",
+      "phone": "1234567891",
+      "gender": "Male",
+      "dateOfBirth": "2016-06-26",
+      "membershipStatus": "Free"
+    }
+  ]
+}
