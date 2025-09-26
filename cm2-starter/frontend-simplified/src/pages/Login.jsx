@@ -1,31 +1,40 @@
 import { useState } from "react";
-import { useNavigation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 const Login = ({ setIsAuthenticated }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const navigate = useNavigation();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const navigate = useNavigate();
 
-  const handleLogin = async (email, password) => {
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+
     try {
-      const res = await fetch("/users/login", {
+      const res = await fetch("/api/users/login", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
+        // credentials: "include", // enable if your backend sets cookies
       });
-      if (res.ok) {
-        const user = await res.json();
-        localStorage.setItem("user", JSON.stringify(user));
-        console.log("User logged in successfully!");
-        setIsAuthenticated(true);
-        navigate("/");
-      } else {
-        console.log("Login failed");
+
+      const data = await res.json().catch(() => null);
+
+      if (!res.ok) {
+        const message = data?.message || "Login failed";
+        throw new Error(message);
       }
-    } catch (error) {
-      console.error("Error during login:", error);
+      sessionStorage.setItem("user", JSON.stringify(data));
+      setIsAuthenticated(true);
+
+      navigate("/", { replace: true });
+    } catch (err) {
+      setError(err.message || "Something went wrong");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -34,19 +43,36 @@ const Login = ({ setIsAuthenticated }) => {
       <div className="login-container">
         <h1>Log in</h1>
         <p>Login using email</p>
-        <p>email</p>
-        <input
-          type="text"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        ></input>
-        <p>password</p>
-        <input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        ></input>
-        <button onClick={() => handleLogin(email, password)}>Log in</button>
+
+        {error && <p className="error">{error}</p>}
+
+        <form onSubmit={handleSubmit}>
+          <label>
+            Email
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              autoComplete="username"
+              required
+            />
+          </label>
+
+          <label>
+            Password
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              autoComplete="current-password"
+              required
+            />
+          </label>
+
+          <button type="submit" disabled={loading}>
+            {loading ? "Logging in..." : "Log in"}
+          </button>
+        </form>
       </div>
     </div>
   );
