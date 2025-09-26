@@ -1,9 +1,12 @@
 require('dotenv').config()
 const express = require("express");
+
 const app = express();
+const userRouter = require("./routes/userRouter");
+
 const morgan = require("morgan");
 // const userRouter = require("./routes/userRouter");
-const { unknownEndpoint,errorHandler } = require("./middleware/customMiddleware");
+const { unknownEndpoint, errorHandler } = require("./middleware/customMiddleware");
 const connectDB = require("./config/db");
 const cors = require("cors");
 
@@ -15,7 +18,7 @@ app.use(morgan("dev"));
 connectDB();
 
 // Use the userRouter for all /users routes
-// app.use("/api/users", userRouter);
+app.use("/users", userRouter);
 
 app.use(unknownEndpoint);
 app.use(errorHandler);
