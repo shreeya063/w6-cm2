@@ -13,7 +13,7 @@ const SignupPage = ({setIsAuthenticated}) => {
   const [phone, setPhone] = useState("");
   const [gender, setGender] = useState("Male");
   const [dob, setDob] = useState("");
-  const [membership, setMembership] = useState("Free");
+  const [membership, setMembership] = useState("VIP");
 
   const submitForm = async (e) => {
     e.preventDefault();
