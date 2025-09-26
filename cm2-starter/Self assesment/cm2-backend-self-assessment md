@@ -1,0 +1,412 @@
+# Self-Assessment (Template)
+This is self-assessment for the backend part of CM-2
+Backend was handled by Su and Eyob.
+
+### Example 1: Improving Code Quality
+
+Initially, our `sígnupUser` endpoint was functional but was only returning email and token, then it was modified to return more basic but non-sensitive use info. 
+
+Here's the original implementation:  
+
+```javascript
+
+const signupUser = async (req, res) => {
+    const { name, email, password, phone_number, gender, date_of_birth, membership_status } = req.body;
+
+    try {
+        const user = await User.signup(name, email, password, phone_number, gender, date_of_birth, membership_status);
+
+        const token = generateToken(user._id);
+
+        res.status(201).json({ email, token });
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+};
+```
+
+
+
+The endpoint worked for requests like:  
+`GET http://localhost:4000/users`  
+
+
+To address these issues, we refactored the code to handle edge cases effectively:  
+
+```javascript
+const signupUser = async (req, res) => {
+    const { name, email, password, phone_number, gender, date_of_birth, membership_status } = req.body;
+
+    try {
+        // Ideally, validate inputs here with Joi or express-validator
+
+        const user = await User.signup(
+            name,
+            email,
+            password,
+            phone_number,
+            gender,
+            date_of_birth,
+            membership_status
+        );
+
+        const token = generateToken(user._id);
+
+        res.status(201).json({
+            success: true,
+            message: "User registered successfully",
+            data: {
+                id: user._id,
+                name: user.name,
+                email: user.email,
+                membership_status: user.membership_status,
+                token,
+            },
+        });
+    } catch (error) {
+        res.status(400).json({
+            success: false,
+            message: "Signup failed",
+            error: error.message,
+        });
+    }
+};
+```
+The same modification was made for the `loginUser`endpoint as well.
+
+- **Improved Return:** The user will get a better response during signup and login.'
+- **Use:** Insures a better user experience.
+
+---
+
+### Example 2: Debugging Route Order in Express
+
+We had the following router set up;
+
+```const express = require('express');
+const router = express.Router();
+
+const { loginUser, signupUser } = require('../controllers/userControllers');
+router.post("/login", loginUser);
+router.post("/signup", signupUser);
+
+
+module.exports = router;
+```
+but we modified as follow so that it is more robust
+
+```
+const express = require('express');
+const router = express.Router();
+
+const { loginUser, signupUser } = require('../controllers/userControllers');
+
+router.post("/api/login", loginUser);
+router.post("/api/signup", signupUser);
+
+```
+- **api/login and api/signup :** Follows standard javascript procedure'
+
+**Lessons Learned:** 
+
+CM-2 has been agreta learning experince for me. We commmunicated well and worked well a group. 
+From the backend side of the coding marathon, I believe we consolidated the knowledge we aquired from the lectures, activities and project work. 
+We were also able to manage our github much better than we did during CM-1.
+
+
+# Example 3
+
+### Strengths
+
+- **Basic CRUD covered**  
+  - You have `getAllJobs`, `createJob`, `getJobById`, `updateJob`, and `deleteJob`.
+
+- **User authorization check**  
+  - You filter by `user_id` for all queries, which is good for multi-user isolation.
+
+- **Validation for ObjectId**  
+  - Using `mongoose.Types.ObjectId.isValid()` prevents invalid IDs from reaching the database.
+
+- **Error handling**  
+  - You use `try/catch` and respond with appropriate HTTP status codes.
+
+### Areas for Improvement
+
+- **Consistency in accessing `user_id`**  
+  - In `getAllJobs`, you use `req.user_id`, while in other methods you use `req.user._id`. It's better to standardize this.
+
+- **`findByIdAndUpdate` and `findByIdAndDelete` misuse**  
+  - These methods only accept the document ID as the first argument. Passing an object like `{_id: jobId, user_id}` will not work as intended. Instead, use `findOneAndUpdate` or `findOneAndDelete` when filtering by multiple fields.
+
+- **Response messages**  
+  - In some places, the error message is generic (`"failed to update job"`). Adding the real error from `err.message` is more helpful for debugging.
+
+- **Query parameter handling**  
+  - In `getAllJobs`, `parseInt(req.query._limit)` could result in `NaN`. You may want a default value and handle non-numeric input gracefully.
+
+- **Minor consistency issues**  
+  - Capitalization in messages: `"job not found"` vs `"Job deleted successfully"` — make it consistent.  
+  - In `deleteJob`, the catch message says `"failed to update job"` instead of `"failed to delete job"`.
+
+before:
+```javascript
+
+const { default: mongoose } = require('mongoose');
+const Job = require('../models/jobModel');
+
+exports.getAllJobs = async (req, res)=> {
+    try{
+    const limit = parseInt(req.query._limit);
+    const user_id = req.user_id;
+    const jobs = limit
+    ? await Job.find({user_id}).sort({createdAt: -1}).limit(limit)
+    :await Job.find({user_id}).sort({createdAt: -1});
+
+
+    res.status(200).json(jobs);
+
+
+    } catch(err){
+    res.status(500).json({error: err.message});
+    }   
+}
+
+exports.createJob = async (req,res) =>{
+    try{
+        const user_id = req.user._id;
+        
+        const newJob = await Job.create({ ...req.body, user_id});
+        res.status(201).json(newJob);
+
+    } catch(err){
+        res.status(500).json({message: "failed to create a new job", error : err.message});
+    }
+}
+
+exports.getJobById = async (req,res)=>{
+    const {jobId} = req.params;
+
+    if(!mongoose.Types.ObjectId.isValid(jobId)){
+        return res.status(400).json({message: "Invalid job ID"});
+    }
+    try{
+        const user_id = req.user._id;
+        const job = await Job.findById(jobId)
+        .where("user_id")
+        .equals(user_id);
+
+        if(job){
+            res.status(200).json(job);
+        } else {
+            res.status(404).json({message: "Job not found"});
+        }
+
+    }catch(err){
+        res.status(500).json({message: "failed to retrieve the job", error : err.message})
+
+    }
+}
+
+exports.updateJob = async (req,res) => {
+    const {jobId} = req.params;
+
+        if(!mongoose.Types.ObjectId.isValid(jobId)){
+        return res.status(400).json({message: "Invalid job ID"});
+    }
+
+    try{
+        const user_id = req.user._id;
+        const updatedJob = await Job.findByIdAndUpdate(
+            {_id: jobId, user_id: user_id},
+            {...req.body},
+            {new: true}
+        );
+
+        if (updatedJob){
+            res.status(200).json(updatedJob);
+        } else {
+            res.status(404).json({message: "job not found"})
+        }
+    
+    } catch(err){
+            res.status(500).json({message: "failed to update job"})
+    }
+};
+
+exports.deleteJob = async (req,res) =>{
+    const { jobId }= req.params;
+
+     if(!mongoose.Types.ObjectId.isValid(jobId)){
+        return res.status(400).json({message: "Invalid job ID"});
+    }
+
+    try{
+        const user_id = req.user._id;
+        const deletedJob = await Job.findByIdAndDelete({ _id: jobId, user_id: user_id});
+        if (deletedJob) {
+            res.status(200).json({message: "Job deleted successfully"});
+        } else {
+            res.status(404).json({message: "job not found"})
+        }
+
+    }catch(err){
+        res.status(500).json({message: "failed to update job"})
+
+    }
+
+}
+
+```
+
+AFTER:
+```javascript
+const { default: mongoose } = require('mongoose');
+const Job = require('../models/jobModel');
+
+exports.getAllJobs = async (req, res) => {
+    try {
+        const limit = parseInt(req.query._limit) || 0; // default: no limit
+        const user_id = req.user._id; // standardized
+
+        const query = Job.find({ user_id }).sort({ createdAt: -1 });
+        if (limit > 0) query.limit(limit);
+
+        const jobs = await query;
+        res.status(200).json(jobs);
+
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+exports.createJob = async (req, res) => {
+    try {
+        const user_id = req.user._id;
+        const newJob = await Job.create({ ...req.body, user_id });
+        res.status(201).json(newJob);
+    } catch (err) {
+        res.status(500).json({ message: "Failed to create a new job", error: err.message });
+    }
+};
+
+exports.getJobById = async (req, res) => {
+    const { jobId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(jobId)) {
+        return res.status(400).json({ message: "Invalid job ID" });
+    }
+
+    try {
+        const user_id = req.user._id;
+        const job = await Job.findOne({ _id: jobId, user_id });
+
+        if (job) res.status(200).json(job);
+        else res.status(404).json({ message: "Job not found" });
+
+    } catch (err) {
+        res.status(500).json({ message: "Failed to retrieve the job", error: err.message });
+    }
+};
+
+exports.updateJob = async (req, res) => {
+    const { jobId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(jobId)) {
+        return res.status(400).json({ message: "Invalid job ID" });
+    }
+
+    try {
+        const user_id = req.user._id;
+        const updatedJob = await Job.findOneAndUpdate(
+            { _id: jobId, user_id },
+            { ...req.body },
+            { new: true }
+        );
+
+        if (updatedJob) res.status(200).json(updatedJob);
+        else res.status(404).json({ message: "Job not found" });
+
+    } catch (err) {
+        res.status(500).json({ message: "Failed to update job", error: err.message });
+    }
+};
+
+exports.deleteJob = async (req, res) => {
+    const { jobId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(jobId)) {
+        return res.status(400).json({ message: "Invalid job ID" });
+    }
+
+    try {
+        const user_id = req.user._id;
+        const deletedJob = await Job.findOneAndDelete({ _id: jobId, user_id });
+
+        if (deletedJob) res.status(200).json({ message: "Job deleted successfully" });
+        else res.status(404).json({ message: "Job not found" });
+
+    } catch (err) {
+        res.status(500).json({ message: "Failed to delete job", error: err.message });
+    }
+};
+```
+
+- **Standardized `req.user._id` across all functions**  
+  - Benefit: Avoids inconsistencies and potential bugs
+
+- **Replaced `findByIdAndUpdate` / `findByIdAndDelete` with `findOneAndUpdate` / `findOneAndDelete`**  
+  - Benefit: Proper filtering by `user_id` works correctly
+
+- **Added default limit in `getAllJobs`**  
+  - Benefit: Prevents `NaN` from breaking the query
+
+- **Consistent error messages with `err.message`**  
+  - Benefit: Easier debugging
+
+- **Consistent capitalization in response messages**  
+  - Benefit: Cleaner API design
+
+- **Corrected catch messages (`deleteJob`)**  
+  - Benefit: Prevents confusing error messages
+
+# Example 4 
+
+### Middleware Issue: Auth Middleware Applied to All Routes
+
+- **Problem**  
+  - All routes, including public ones, were requiring authentication.  
+  - For example, even `getAllJobs` for public viewing failed if no user token was provided.
+
+- **Cause**  
+  - In the router, the auth middleware was applied globally before defining specific routes:  
+    ```js
+    router.use(authMiddleware); // <- this made every route require auth
+    ```
+  - This caused unintended restriction on routes that were supposed to be public.
+
+- **Solution**  
+  - Moved the middleware to only protect specific routes:  
+    ```javascript
+    //GET /Job
+    router.get('/', getAllJobs);
+    router.get('/:jobId', getJobById);
+
+    router.use(requireAuth);
+
+    //POST /Job
+    router.post('/', createJob);
+
+    //Get /Job/:jobId
+
+    //PUT /Job/:jobId
+    router.put('/:jobId', updateJob);
+
+    //DELETE /Job/:jobId
+    router.delete('/:jobId', deleteJob);
+    ```
+  - Only routes that require authentication now use the middleware.
+
+- **Result**  
+  - Public routes work without authentication.  
+  - Protected routes remain secure.  
+  - Code behavior became predictable and correct.

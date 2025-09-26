@@ -30,29 +30,24 @@ exports.createJob = async (req,res) =>{
     }
 }
 
-exports.getJobById = async (req,res)=>{
-    const {jobId} = req.params;
+exports.getJobById = async (req, res) => {
+    const { jobId } = req.params;
 
-    if(!mongoose.Types.ObjectId.isValid(jobId)){
-        return res.status(400).json({message: "Invalid job ID"});
+    if (!mongoose.Types.ObjectId.isValid(jobId)) {
+        return res.status(400).json({ message: "Invalid job ID" });
     }
-    try{
+
+    try {
         const user_id = req.user._id;
-        const job = await Job.findById(jobId)
-        .where("user_id")
-        .equals(user_id);
+        const job = await Job.findOne({ _id: jobId, user_id });
 
-        if(job){
-            res.status(200).json(job);
-        } else {
-            res.status(404).json({message: "Job not found"});
-        }
+        if (job) res.status(200).json(job);
+        else res.status(404).json({ message: "Job not found" });
 
-    }catch(err){
-        res.status(500).json({message: "failed to retrieve the job", error : err.message})
-
+    } catch (err) {
+        res.status(500).json({ message: "Failed to retrieve the job", error: err.message });
     }
-}
+};
 
 exports.updateJob = async (req,res) => {
     const {jobId} = req.params;
